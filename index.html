@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional SIP Calculator</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CSS Styling (Dark Mode) --- */
+        
+        :root {
+            --bg-color: #161b22;       /* Dark background */
+            --card-color: #1c2128;      /* Slightly lighter card */
+            --input-bg: #0d1117;       /* Darker input area */
+            --border-color: #30363d;
+            --text-primary: #e6edf3;   /* Main text color (light) */
+            --text-secondary: #8b949e; /* Lighter text (labels) */
+            --accent-green: #238636;   /* Green for buttons */
+            --accent-green-hover: #2ea043;
+            --accent-blue: #1f6feb;    /* Blue for slider and accents */
+            --invested-color: #ff9f40; /* Orange for invested amount */
+            --returns-color: #36a2eb;   /* Blue for returns */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Main calculator container */
+        .calculator-container {
+            width: 100%;
+            max-width: 400px;
+            background-color: var(--card-color);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        /* Top display for the total */
+        .display-area {
+            background-color: var(--input-bg);
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .display-area .label {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .display-area .total {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--text-primary);
+            word-wrap: break-word;
+            margin-top: 5px;
+        }
+
+        /* All input fields */
+        .input-section {
+            padding: 25px 20px 20px 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            font-weight: 500;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+        }
+
+        .input-group input[type="number"]:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.3);
+            outline: none;
+        }
+
+        /* Range Slider Styling */
+        #return-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            background-color: var(--input-bg);
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: var(--input-bg);
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            outline: none;
+            margin-top: 5px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid var(--card-color);
+            box-shadow: 0 0 5px rgba(31, 111, 235, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid var(--card-color);
+            box-shadow: 0 0 5px rgba(31, 111, 235, 0.5);
+        }
+
+        /* Calculate button */
+        #calculate-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            background-color: var(--accent-green);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            margin-top: 5px;
+        }
+
+        #calculate-btn:hover {
+            background-color: var(--accent-green-hover);
+        }
+        #calculate-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Output / Result section */
+        .output-section {
+            padding: 25px 20px;
+            background-color: var(--input-bg);
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+
+        /* Chart container */
+        .chart-container {
+            width: 100%;
+            max-width: 220px;
+            margin: 0 auto 25px auto;
+            position: relative;
+        }
+
+        /* Result details */
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px;
+            background-color: var(--card-color);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .result-item span:first-child {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Dot icons */
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-invested { background-color: var(--invested-color); }
+        .dot-returns { background-color: var(--returns-color); }
+
+        .result-item span:last-child {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="calculator-container">
+        
+        <div class="display-area">
+            <div class="label">Total Value</div>
+            <div class="total" id="total-amount-display">₹0</div>
+        </div>
+
+        <div class="input-section">
+            
+            <div class="input-group">
+                <label for="monthly-sip">Monthly Investment (₹)</label>
+                <input type="number" id="monthly-sip" value="5000" placeholder="e.g., 5000">
+            </div>
+
+            <div class="input-group">
+                <label for="time-years">Investment Period (Years)</label>
+                <input type="number" id="time-years" value="10" placeholder="e.g., 10">
+            </div>
+
+            <div class="input-group">
+                <label for="return-rate">
+                    <span>Expected Return Rate</span>
+                    <span id="return-value">12%</span>
+                </label>
+                <input type="range" id="return-rate" min="1" max="30" value="12" step="0.5">
+            </div>
+
+            <button id="calculate-btn">Calculate</button>
+        </div>
+
+        <div class="output-section" id="output-section">
+            
+            <div class="chart-container">
+                <canvas id="sipChart"></canvas>
+            </div>
+
+            <div class="results">
+                <div class="result-item">
+                    <span><span class="dot dot-invested"></span>Invested Amount</span>
+                    <span id="invested-amount">₹0</span>
+                </div>
+                <div class="result-item">
+                    <span><span class="dot dot-returns"></span>Est. Returns</span>
+                    <span id="estimated-returns">₹0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get DOM Elements
+        const monthlySipInput = document.getElementById('monthly-sip');
+        const timeYearsInput = document.getElementById('time-years');
+        const returnRateInput = document.getElementById('return-rate');
+        const returnValueSpan = document.getElementById('return-value');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const outputSection = document.getElementById('output-section');
+
+        // Output Elements
+        const totalDisplay = document.getElementById('total-amount-display');
+        const investedAmountSpan = document.getElementById('invested-amount');
+        const estimatedReturnsSpan = document.getElementById('estimated-returns');
+
+        // Chart.js Variable
+        const ctx = document.getElementById('sipChart').getContext('2d');
+        let sipChart;
+
+        // Function to format currency (Indian Rupees)
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+            }).format(amount);
+        }
+
+        // Event Listener for Range Slider
+        returnRateInput.addEventListener('input', (e) => {
+            returnValueSpan.textContent = `${e.target.value}%`;
+        });
+
+        // Event Listener for Calculate Button
+        calculateBtn.addEventListener('click', () => {
+            // Get input values
+            const P = parseFloat(monthlySipInput.value); // Monthly Investment
+            const t = parseFloat(timeYearsInput.value); // Time in Years
+            const annualRate = parseFloat(returnRateInput.value); // Annual Rate
+
+            // Validate inputs
+            if (isNaN(P) || P <= 0 || isNaN(t) || t <= 0 || isNaN(annualRate) || annualRate <= 0) {
+                alert("Please enter valid, positive numbers in all fields.");
+                return;
+            }
+
+            // --- Calculation ---
+            const n = t * 12; // Total number of months
+            const i = (annualRate / 100) / 12; // Monthly interest rate
+
+            // SIP Future Value Formula: M = P × [((1 + i)^n - 1) / i] × (1 + i)
+            const totalAmount = P * ( (Math.pow(1 + i, n) - 1) / i ) * (1 + i);
+            const investedAmount = P * n;
+            const estimatedReturns = totalAmount - investedAmount;
+
+            // --- Display Results ---
+            totalDisplay.textContent = formatCurrency(totalAmount);
+            investedAmountSpan.textContent = formatCurrency(investedAmount);
+            estimatedReturnsSpan.textContent = formatCurrency(estimatedReturns);
+
+            // Show the output section
+            outputSection.style.display = 'block';
+
+            // Update the chart
+            updateChart(investedAmount, estimatedReturns);
+        });
+
+        // Function to Create or Update the Doughnut Chart
+        function updateChart(invested, returns) {
+            // Get root styles for colors
+            const investedColor = getComputedStyle(document.documentElement).getPropertyValue('--invested-color');
+            const returnsColor = getComputedStyle(document.documentElement).getPropertyValue('--returns-color');
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+            const cardColor = getComputedStyle(document.documentElement).getPropertyValue('--card-color');
+
+            // Destroy existing chart if it exists
+            if (sipChart) {
+                sipChart.destroy();
+            }
+
+            // Create new chart
+            sipChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Invested Amount', 'Est. Returns'],
+                    datasets: [{
+                        data: [invested, returns],
+                        backgroundColor: [
+                            investedColor,
+                            returnsColor
+                        ],
+                        borderColor: 'var(--input-bg)', // Matches output section bg
+                        borderWidth: 6,
+                        hoverBorderWidth: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '70%', // Makes it a "doughnut"
+                    plugins: {
+                        legend: {
+                            display: false // Hide legend (we have custom labels)
+                        },
+                        tooltip: {
+                            backgroundColor: cardColor,
+                            titleColor: textColor,
+                            bodyColor: textColor,
+                            displayColors: true,
+                            borderColor: 'var(--border-color)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    let value = context.raw;
+                                    return `${label}: ${formatCurrency(value)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
